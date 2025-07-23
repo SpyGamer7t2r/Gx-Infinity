@@ -1,14 +1,41 @@
 import os
 import random
 import requests
-from config import AI_MODE, OPENAI_API_KEY, OPENROUTER_API_KEY, DEEPAI_API_KEY
+from config import OPENAI_API_KEY, OPENROUTER_API_KEY, DEEPAI_API_KEY
 
-# Mood-based reply starters
+from deep_translator import GoogleTranslator
+from langdetect import detect
+
+# User-based storage (can move to Redis/DB later)
+USER_BRAINS = {}
+USER_MOODS = {}
+
+# Mood Starters
 romantic_lines = ["Jaanu ❤️", "Baby 😘", "Meri Jindagi 💕", "Suno na 😍"]
 angry_lines = ["Kya bakwaas hai 😡", "Shaant ho ja 😠", "Faltu mat bol!"]
 funny_lines = ["Tu toh chomu nikla 😂", "Bhai kya logic hai 😂", "Mazaak chal raha hai kya?"]
 
-def apply_mood(text, mood="neutral"):
+# === NSFW Detector ===
+def is_nsfw(text: str) -> bool:
+    text = text.lower()
+    nsfw_keywords = ["sex", "nude", "horny", "boobs", "penis", "vagina", "xxx", "porn", "bhabhi", "nangi"]
+    return any(word in text for word in nsfw_keywords)
+
+# === Translator ===
+def detect_language(text: str) -> str:
+    try:
+        return detect(text)
+    except:
+        return "en"
+
+def translate_text(text: str, target_lang="en") -> str:
+    try:
+        return GoogleTranslator(source='auto', target=target_lang).translate(text)
+    except Exception as e:
+        return f"[❌ Translation failed: {e}]"
+
+# === Mood handler ===
+def apply_mood(text, mood):
     if mood == "romantic":
         return f"{random.choice(romantic_lines)} {text}"
     elif mood == "angry":
@@ -17,62 +44,70 @@ def apply_mood(text, mood="neutral"):
         return f"{random.choice(funny_lines)} {text}"
     return text
 
+# === Main Response Handler ===
 async def generate_ai_response(message):
+    user_id = message.from_user.id
     user_text = message.text
-    mood = os.getenv("DEFAULT_MOOD", "neutral")
 
-    # If you add per-user mood in future:
-    # mood = get_user_mood(message.from_user.id)
+    if is_nsfw(user_text):
+        return "❌ NSFW content detected. Can't process that."
 
-    if AI_MODE == "openai":
-        response = await openai_response(user_text)
-    elif AI_MODE == "openrouter":
-        response = await openrouter_response(user_text)
-    elif AI_MODE == "deepai":
-        response = await deepai_response(user_text)
+    lang = detect_language(user_text)
+    translated_input = translate_text(user_text, "en") if lang != "en" else user_text
+
+    brain = USER_BRAINS.get(user_id, "openai")
+    mood = USER_MOODS.get(user_id, "default")
+
+    if brain == "openai":
+        raw_reply = openai_response(translated_input)
+    elif brain == "openrouter":
+        raw_reply = openrouter_response(translated_input)
+    elif brain == "deepai":
+        raw_reply = deepai_response(translated_input)
     else:
-        return "AI mode not configured properly."
+        return "❌ Unknown brain mode."
 
-    return apply_mood(response, mood)
+    final = apply_mood(raw_reply, mood)
+    return translate_text(final, lang) if lang != "en" else final
 
-async def openai_response(text):
+# === AI Brain Functions ===
+def openai_response(text):
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    json_data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [{"role": "user", "content": text}]
+    }
     try:
-        headers = {
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        json_data = {
-            "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": text}]
-        }
         res = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=json_data)
-        res.raise_for_status()
-        return res.json()["choices"][0]["message"]["content"]
+        return res.json().get("choices", [{}])[0].get("message", {}).get("content", "OpenAI Error.")
     except Exception as e:
-        return f"[OpenAI Error: {e}]"
+        return f"[OpenAI Failed: {e}]"
 
-async def openrouter_response(text):
+def openrouter_response(text):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    json_data = {
+        "model": "openrouter/auto",  # You can use `nous/hermes-2`, `meta-llama`, `mistralai`, `claude-3-opus`, etc.
+        "messages": [{"role": "user", "content": text}]
+    }
     try:
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        json_data = {
-            "model": "openrouter/auto",
-            "messages": [{"role": "user", "content": text}]
-        }
         res = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=json_data)
-        res.raise_for_status()
-        return res.json()["choices"][0]["message"]["content"]
+        return res.json().get("choices", [{}])[0].get("message", {}).get("content", "OpenRouter Error.")
     except Exception as e:
-        return f"[OpenRouter Error: {e}]"
+        return f"[OpenRouter Failed: {e}]"
 
-async def deepai_response(text):
+def deepai_response(text):
     try:
-        headers = {"api-key": DEEPAI_API_KEY}
-        data = {"text": text}
-        res = requests.post("https://api.deepai.org/api/text-generator", data=data, headers=headers)
-        res.raise_for_status()
-        return res.json().get("output", "No output.")
+        res = requests.post(
+            "https://api.deepai.org/api/text-generator",
+            data={"text": text},
+            headers={"api-key": DEEPAI_API_KEY}
+        )
+        return res.json().get("output", "DeepAI Error.")
     except Exception as e:
-        return f"[DeepAI Error: {e}]"
+        return f"[DeepAI Failed: {e}]"
