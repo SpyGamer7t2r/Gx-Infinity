@@ -1,6 +1,6 @@
 # modules/auto_reply_modes.py
 
-from pyrogram import filters
+from pyrogram import Client, filters  # ✅ Added Client import
 from pyrogram.types import Message
 from config import OWNER_ID
 from brain import get_ai_reply
