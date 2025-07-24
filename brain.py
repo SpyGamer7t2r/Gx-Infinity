@@ -44,7 +44,7 @@ def apply_mood(text, mood):
         return f"{random.choice(funny_lines)} {text}"
     return text
 
-# === Main Response Handler ===
+# === Main Response Handler for Message ===
 async def generate_ai_response(message):
     user_id = message.from_user.id
     user_text = message.text
@@ -63,6 +63,26 @@ async def generate_ai_response(message):
     elif brain == "openrouter":
         raw_reply = openrouter_response(translated_input)
     elif brain == "deepai":
+        raw_reply = deepai_response(translated_input)
+    else:
+        return "❌ Unknown brain mode."
+
+    final = apply_mood(raw_reply, mood)
+    return translate_text(final, lang) if lang != "en" else final
+
+# === 🔁 Simple AI Reply Helper (used in auto_reply_modes) ===
+def get_ai_reply(user_id, user_text, brain_mode="openai", mood="default"):
+    if is_nsfw(user_text):
+        return "❌ NSFW content detected."
+
+    lang = detect_language(user_text)
+    translated_input = translate_text(user_text, "en") if lang != "en" else user_text
+
+    if brain_mode == "openai":
+        raw_reply = openai_response(translated_input)
+    elif brain_mode == "openrouter":
+        raw_reply = openrouter_response(translated_input)
+    elif brain_mode == "deepai":
         raw_reply = deepai_response(translated_input)
     else:
         return "❌ Unknown brain mode."
@@ -92,7 +112,7 @@ def openrouter_response(text):
         "Content-Type": "application/json"
     }
     json_data = {
-        "model": "openrouter/auto",  # You can use `nous/hermes-2`, `meta-llama`, `mistralai`, `claude-3-opus`, etc.
+        "model": "openrouter/auto",
         "messages": [{"role": "user", "content": text}]
     }
     try:
