@@ -1,26 +1,29 @@
 import os
 from dotenv import load_dotenv
 
+# Load environment variables from .env file
 load_dotenv()
 
+# --- Telegram Bot Credentials ---
 API_ID = int(os.getenv("API_ID", "123456"))
 API_HASH = os.getenv("API_HASH", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 
-# AI settings
-AI_MODE = os.getenv("AI_MODE", "openai")  # openai / openrouter / deepai
+# --- AI Engine Settings ---
+AI_MODE = os.getenv("AI_MODE", "openai").lower()  # openai / openrouter / deepai
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY", "")
 
-DEFAULT_MOOD = os.getenv("DEFAULT_MOOD", "neutral")  # romantic / angry / funny / neutral
-
-# Admins
+# --- Owner/Admin ---
 OWNER_ID = int(os.getenv("OWNER_ID", "123456789"))
 
-# Music or Download folders
-DOWNLOAD_FOLDER = "downloads"
-TEMP_FOLDER = "temp"
+# --- Default Bot Mood ---
+DEFAULT_MOOD = os.getenv("DEFAULT_MOOD", "neutral")  # romantic / angry / funny / neutral / serious
 
-# Feature toggles
+# --- Feature Toggles ---
 ALLOW_NSFW = os.getenv("ALLOW_NSFW", "false").lower() == "true"
+
+# --- File Handling Paths ---
+DOWNLOAD_FOLDER = "downloads"     # For downloads, zips, media
+TEMP_FOLDER = "temp"              # For temporary processing
