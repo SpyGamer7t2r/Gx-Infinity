@@ -38,3 +38,7 @@ async def show_stats(client, message: Message):
         f"📆 First Seen: `{stats['first_seen'].strftime('%Y-%m-%d %H:%M:%S')}`"
     )
     await message.reply(reply)
+
+# Add this at the end
+def update_stats():
+    return user_stats
