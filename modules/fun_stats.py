@@ -1,54 +1,82 @@
-# modules/fun_stats.py
-
+import json
+import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from datetime import datetime
-from config import PREFIX
 
-# ⚠️ In-memory user stats (reset on restart) — Replace with DB for persistence later
-user_stats = {}
+STATS_FILE = "user_stats.json"
 
 
-@Client.on_message(filters.private | filters.group)
-async def track_message_stats(client, message: Message):
-    if not message.from_user:
-        return
+def load_stats():
+    if os.path.exists(STATS_FILE):
+        with open(STATS_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
-    user_id = message.from_user.id
-    chat_type = message.chat.type
 
-    # Initialize if not tracked
-    if user_id not in user_stats:
-        user_stats[user_id] = {
-            "dm": 0,
-            "group": 0,
-            "first_seen": datetime.utcnow()
+def save_stats(stats):
+    with open(STATS_FILE, "w") as f:
+        json.dump(stats, f, indent=4)
+
+
+def update_user_stats(user_id: int, username: str, chat_type: str):
+    stats = load_stats()
+    uid = str(user_id)
+
+    if uid not in stats:
+        stats[uid] = {
+            "username": username or "Unknown",
+            "dms": 0,
+            "groups": 0,
+            "total": 0,
         }
 
+    # Update username if changed
+    if username and stats[uid]["username"] != username:
+        stats[uid]["username"] = username
+
+    # Increment stats
     if chat_type == "private":
-        user_stats[user_id]["dm"] += 1
-    else:
-        user_stats[user_id]["group"] += 1
+        stats[uid]["dms"] += 1
+    elif chat_type in ["group", "supergroup"]:
+        stats[uid]["groups"] += 1
+
+    stats[uid]["total"] += 1
+    save_stats(stats)
 
 
-@Client.on_message(filters.command("mystats", prefixes=PREFIX))
+@Client.on_message(filters.command("mystats"))
 async def show_stats(client, message: Message):
-    user_id = message.from_user.id
-    stats = user_stats.get(user_id)
+    user_id = str(message.from_user.id)
+    stats = load_stats()
 
-    if not stats:
-        return await message.reply("❌ No stats found for you yet. Start chatting!")
+    if user_id not in stats:
+        await message.reply_text("📉 Koi stats nahi mile abhi tak.")
+        return
 
-    reply = (
-        f"📊 **Your Chat Stats**\n"
-        f"🆔 User ID: `{user_id}`\n"
-        f"💌 DMs Sent: `{stats['dm']}`\n"
-        f"👥 Group Messages: `{stats['group']}`\n"
-        f"🕐 First Seen: `{stats['first_seen'].strftime('%Y-%m-%d %H:%M:%S')}`"
+    s = stats[user_id]
+    await message.reply_text(
+        f"📊 **Aapke Stats**\n\n"
+        f"👤 Username: `{s['username']}`\n"
+        f"📬 DMs Used: `{s['dms']}`\n"
+        f"👥 Groups Used: `{s['groups']}`\n"
+        f"📈 Total Interactions: `{s['total']}`"
     )
-    await message.reply(reply)
 
 
-# Optional function to expose stats to other modules
-def update_stats():
-    return user_stats
+@Client.on_message(filters.command("topstats"))
+async def top_stats(client, message: Message):
+    stats = load_stats()
+    if not stats:
+        await message.reply_text("Koi bhi data available nahi hai abhi.")
+        return
+
+    # Sort by total interactions
+    sorted_stats = sorted(
+        stats.items(), key=lambda x: x[1]["total"], reverse=True
+    )
+
+    msg = "🏆 **Top 10 Active Users**\n\n"
+    for i, (uid, data) in enumerate(sorted_stats[:10], 1):
+        msg += f"{i}. `{data['username']}` - {data['total']} msgs\n"
+
+    await message.reply_text(msg)
