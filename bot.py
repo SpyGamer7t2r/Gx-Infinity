@@ -7,7 +7,7 @@ from config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID
 from brain import generate_ai_response
 
 from utils import zipper, unzipper, password_gen, downloader
-from modules import notes_tasks, translate, music_assistant
+from modules import notes_tasks, translator, music_assistant
 from modules.auto_reply_modes import auto_reply
 from modules.restrictor import restrict_user
 from modules.reaction_handler import emoji_react
