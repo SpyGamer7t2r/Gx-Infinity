@@ -10,7 +10,7 @@ from utils import zipper, unzipper, password_gen, downloader
 from modules import notes_tasks, translator, music_assistant
 import modules.auto_reply_modes
 from modules.restrictor import restrict_user
-from modules.reaction_handler import emoji_react
+import modules.reaction_handler  
 from modules.nsfw_guard import scan_nsfw
 from modules.product_compare import compare_product_prices
 from modules.voice_to_text import voice_to_text_handler
