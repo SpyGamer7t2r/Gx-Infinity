@@ -1,50 +1,63 @@
-# Core libraries
+# Telegram Core
 pyrogram==2.0.106
 tgcrypto
+
+# Env & Config
 python-dotenv
 pymongo
-aiohttp
 requests
+aiohttp
+
+# AI Engines
 openai
 deepai
-pillow
+
+# Zip & Archive Tools
 pyzipper
-youtube_dl
-yt_dlp
-bs4
-googletrans==4.0.0rc1
-gTTS
-SpeechRecognition
-pydub
-moviepy
-PyPDF2
-pytube
-python-telegram-bot
-emoji
-beautifulsoup4
-selenium
-pyscreenshot
-pyautogui
-python-barcode
-reportlab
-translate
-fpdf
-langdetect
-textblob
-nltk
-fuzzywuzzy
-python-Levenshtein
-numexpr
-schedule
-psutil
-opencv-python
-tqdm
-pyshorteners
-pywhatkit
-python-magic
-scikit-learn
-pyqrcode
 pyaes
 py7zr
 rarfile
+
+# File & Web Utils
+youtube_dl
+yt_dlp
+pytube
+bs4
+pillow
+opencv-python
+python-magic
+moviepy
+pydub
+fpdf
+PyPDF2
+reportlab
 telegraph
+
+# Translator + Language
+googletrans==4.0.0rc1
+translate
+langdetect
+textblob
+nltk
+
+# Voice & Speech
+gTTS
+SpeechRecognition
+
+# NLP & Word Games
+fuzzywuzzy
+python-Levenshtein
+
+# Other Utilities
+emoji
+pyshorteners
+pywhatkit
+pyscreenshot
+pyautogui
+selenium
+python-barcode
+numexpr
+schedule
+psutil
+scikit-learn
+tqdm
