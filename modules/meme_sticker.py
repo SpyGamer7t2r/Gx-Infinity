@@ -31,4 +31,13 @@ async def send_meme(client, message: Message):
     )
 
 @Client.on_message(filters.command("sticker", prefixes=PREFIX))
-async def send_sticker(client, message):
+async def send_sticker(client, message: Message):
+    sticker_id = random.choice(stickers)
+    await message.reply_sticker(sticker_id)
+
+# Exported for external use
+async def send_funny_reply(client, message: Message):
+    if random.choice([True, False]):
+        await send_meme(client, message)
+    else:
+        await send_sticker(client, message)
