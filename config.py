@@ -27,3 +27,6 @@ ALLOW_NSFW = os.getenv("ALLOW_NSFW", "false").lower() == "true"
 # --- File Handling Paths ---
 DOWNLOAD_FOLDER = "downloads"     # For downloads, zips, media
 TEMP_FOLDER = "temp"              # For temporary processing
+
+# --- Supported Command Prefixes ---
+PREFIX = ["/", "!", ".", "?"]     # Support for multiple prefix symbols
