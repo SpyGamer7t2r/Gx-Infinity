@@ -63,3 +63,5 @@ scikit-learn
 tqdm
 deep-translator
 langdetect
+beautifulsoup4
+requests
