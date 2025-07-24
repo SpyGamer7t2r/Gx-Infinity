@@ -31,4 +31,4 @@ async def send_meme(client, message: Message):
     )
 
 @Client.on_message(filters.command("sticker", prefixes=PREFIX))
-async def send_sticker(client, message
+async def send_sticker(client, message):
