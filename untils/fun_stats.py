@@ -1,67 +1,47 @@
+# modules/fun_stats.py
+
 import json
 import os
-from collections import defaultdict, Counter
+from datetime import datetime
 
-STATS_FILE = "data/fun_stats.json"
-
-# Ensure file exists
-if not os.path.exists("data"):
-    os.makedirs("data")
-
-if not os.path.isfile(STATS_FILE):
-    with open(STATS_FILE, "w") as f:
-        json.dump({}, f)
-
+STATS_FILE = "data/user_stats.json"
 
 def load_stats():
+    if not os.path.exists(STATS_FILE):
+        return {}
     with open(STATS_FILE, "r") as f:
         return json.load(f)
 
-
-def save_stats(data):
+def save_stats(stats):
     with open(STATS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(stats, f, indent=2)
 
-
-def update_user_stats(user_id: int, chat_id: int, is_private: bool = False, partner_id: int = None):
+async def update_user_stats(user_id, chat_id, is_private=True, partner_id=None):
     stats = load_stats()
-
     user_id = str(user_id)
-    chat_id = str(chat_id)
 
     if user_id not in stats:
         stats[user_id] = {
-            "message_count": 0,
-            "chats": [],
-            "dm_partners": [],
+            "messages": 0,
+            "private_chats": 0,
+            "group_chats": [],
+            "partners": [],
+            "last_seen": None
         }
 
-    stats[user_id]["message_count"] += 1
+    stats[user_id]["messages"] += 1
+    stats[user_id]["last_seen"] = datetime.utcnow().isoformat()
 
-    if chat_id not in stats[user_id]["chats"]:
-        stats[user_id]["chats"].append(chat_id)
+    if is_private:
+        stats[user_id]["private_chats"] += 1
+    else:
+        group_id = str(chat_id)
+        if group_id not in stats[user_id]["group_chats"]:
+            stats[user_id]["group_chats"].append(group_id)
 
-    if is_private and partner_id:
-        stats[user_id]["dm_partners"].append(str(partner_id))
+    if partner_id:
+        partner_id = str(partner_id)
+        if partner_id != user_id and partner_id not in stats[user_id]["partners"]:
+            stats[user_id]["partners"].append(partner_id)
 
     save_stats(stats)
-
-
-def get_user_stats(user_id: int):
-    stats = load_stats()
-    user_id = str(user_id)
-
-    if user_id not in stats:
-        return None
-
-    data = stats[user_id]
-    total_msgs = data.get("message_count", 0)
-    total_chats = len(data.get("chats", []))
-    common_dms = Counter(data.get("dm_partners", []))
-    top_3_dms = common_dms.most_common(3)
-
-    return {
-        "messages": total_msgs,
-        "chats": total_chats,
-        "top_dm_users": top_3_dms,
-  }
