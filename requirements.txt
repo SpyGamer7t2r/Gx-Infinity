@@ -61,3 +61,4 @@ schedule
 psutil
 scikit-learn
 tqdm
+deep-translator
