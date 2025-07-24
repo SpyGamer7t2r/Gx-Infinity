@@ -1,47 +1,41 @@
 # modules/fun_stats.py
 
-import json
-import os
+from pyrogram import Client, filters
+from pyrogram.types import Message
 from datetime import datetime
-
-STATS_FILE = "data/user_stats.json"
-
-def load_stats():
-    if not os.path.exists(STATS_FILE):
-        return {}
-    with open(STATS_FILE, "r") as f:
-        return json.load(f)
-
-def save_stats(stats):
-    with open(STATS_FILE, "w") as f:
-        json.dump(stats, f, indent=2)
-
-async def update_user_stats(user_id, chat_id, is_private=True, partner_id=None):
-    stats = load_stats()
-    user_id = str(user_id)
-
-    if user_id not in stats:
-        stats[user_id] = {
-            "messages": 0,
-            "private_chats": 0,
-            "group_chats": [],
-            "partners": [],
-            "last_seen": None
+from config import PREFIX
+# ⚠️ In-memory user stats (reset on restart) — Replace with DB for persistence later
+user_stats = {}
+@Client.on_message(filters.private | filters.group)
+async def track_message_stats(client, message: Message):
+    if not message.from_user:
+        return
+    user_id = message.from_user.id
+    chat_type = message.chat.type
+    # Initialize if not tracked
+    if user_id not in user_stats:
+        user_stats[user_id] = {
+            "dm": 0,
+            "group": 0,
+            "first_seen": datetime.utcnow()
         }
-
-    stats[user_id]["messages"] += 1
-    stats[user_id]["last_seen"] = datetime.utcnow().isoformat()
-
-    if is_private:
-        stats[user_id]["private_chats"] += 1
+    if chat_type == "private":
+        user_stats[user_id]["dm"] += 1
     else:
-        group_id = str(chat_id)
-        if group_id not in stats[user_id]["group_chats"]:
-            stats[user_id]["group_chats"].append(group_id)
-
-    if partner_id:
-        partner_id = str(partner_id)
-        if partner_id != user_id and partner_id not in stats[user_id]["partners"]:
-            stats[user_id]["partners"].append(partner_id)
-
-    save_stats(stats)
+        user_stats[user_id]["group"] += 1
+@Client.on_message(filters.command("mystats", prefixes=PREFIX))
+async def show_stats(client, message: Message):
+    user_id = message.from_user.id
+    stats = user_stats.get(user_id)
+    if not stats:
+        return await message.reply("❌  No stats found for you yet. Start chatting!")
+    reply = (
+        f"📊 **Your Chat Stats**\n"
+        f"🆔 User ID: `{user_id}`\n"
+        f"💌 DMs Sent: `{stats['dm']}`\n"
+        f"👥 Group Messages: `{stats['group']}`\n"
+        f"🕐 First Seen: `{stats['first_seen'].strftime('%Y-%m-%d %H:%M:%S')}`"
+    )
+    await message.reply(reply)
+# Optional function to expose stats to other modules
+def update_user_stats():
