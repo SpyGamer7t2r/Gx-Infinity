@@ -62,3 +62,5 @@ psutil
 scikit-learn
 tqdm
 deep-translator
+deep-translator
+langdetect
