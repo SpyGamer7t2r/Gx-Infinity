@@ -2,46 +2,33 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-import requests
-import random
 from config import PREFIX
+import random
 
-MEME_APIS = [
-    "https://meme-api.com/gimme",
-    "https://meme-api.com/gimme/dankmemes",
-    "https://meme-api.com/gimme/wholesomememes",
+memes = [
+    "https://i.imgflip.com/30b1gx.jpg",
+    "https://i.imgflip.com/26am.jpg",
+    "https://i.imgflip.com/1bij.jpg",
+    "https://i.imgflip.com/2fm6x.jpg",
+    "https://i.imgflip.com/3tx08g.jpg",
+    "https://i.imgflip.com/5t4guq.jpg",
+    "https://i.imgflip.com/5kdwuh.jpg"
 ]
 
-STICKER_PACKS = [
-    "FunnyStickers",
-    "MemesGang",
-    "ToxicStickers",
+stickers = [
+    "CAACAgUAAxkBAAEFRA9mZ4bZmxdv-sb3p3uZpiBTqANcDQACuQMAAiRn2VcXBiOPPYbl3jQE",
+    "CAACAgUAAxkBAAEFRA5mZ4bJYHhgwA2AGoR5TZRlmDNLuwACtwMAAiRn2VfY8uycAZf7JjQE",
+    "CAACAgUAAxkBAAEFRBFmZ4bn96fY_6Y2f9f6dj4TwUo9AwACuAMAAiRn2VctIXSVP6wM9jQE",
+    "CAACAgUAAxkBAAEFRBNmZ4cJux7IyzbEC9rEafSCGfGnbgACugMAAiRn2VdWaMX0ewziKjQE"
 ]
 
-@Client.on_message(filters.command(["meme", "memes"], prefixes=PREFIX))
-async def send_random_meme(client, message: Message):
-    url = random.choice(MEME_APIS)
-    try:
-        res = requests.get(url).json()
-        meme_url = res["url"]
-        title = res.get("title", "Meme")
-        subreddit = res.get("subreddit", "")
-        await message.reply_photo(
-            meme_url,
-            caption=f"😂 **{title}**\n🔗 Subreddit: `{subreddit}`",
-        )
-    except Exception as e:
-        await message.reply("⚠️ Failed to fetch meme.")
+@Client.on_message(filters.command("meme", prefixes=PREFIX))
+async def send_meme(client, message: Message):
+    meme_url = random.choice(memes)
+    await message.reply_photo(
+        photo=meme_url,
+        caption="😂 Here’s a meme to brighten your day!"
+    )
 
-@Client.on_message(filters.command(["sticker", "funny"], prefixes=PREFIX))
-async def send_random_sticker(client, message: Message):
-    pack = random.choice(STICKER_PACKS)
-    sticker_query = f"https://api.telegram.org/bot{client.token}/getStickerSet?name={pack}"
-    try:
-        res = requests.get(sticker_query).json()
-        stickers = res["result"]["stickers"]
-        sticker = random.choice(stickers)
-        file_id = sticker["file_id"]
-        await message.reply_sticker(file_id)
-    except Exception as e:
-        await message.reply("⚠️ Could not load sticker. Try again.")
+@Client.on_message(filters.command("sticker", prefixes=PREFIX))
+async def send_sticker(client, message
