@@ -1,37 +1,45 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from utils.nsfw_scan import is_nsfw_content
+import re
 
-NSFW_MODE = {}
+# Add more keywords or use an external NSFW detection API for images
+NSFW_KEYWORDS = [
+    "nude", "porn", "sex", "boobs", "pussy", "dick", "xxx", "nsfw", "horny", "fuck", "bitch", "asshole"
+]
 
-@Client.on_message(filters.command("nsfwmode"))
+# Example config for per group NSFW mode (you can link to a DB or config file)
+NSFW_MODE_ENABLED = {}
+
+def is_nsfw_text(text: str):
+    return any(re.search(rf"\b{re.escape(word)}\b", text.lower()) for word in NSFW_KEYWORDS)
+
+@Client.on_message(filters.command("nsfw_mode"))
 async def toggle_nsfw_mode(_, message: Message):
-    chat_id = message.chat.id
-    args = message.text.split()
-    if len(args) < 2:
-        await message.reply("Usage: `/nsfwmode on` or `/nsfwmode off`", quote=True)
+    if message.chat.type not in ["supergroup", "group"]:
+        await message.reply("This command only works in groups.")
         return
 
-    mode = args[1].lower()
-    if mode == "on":
-        NSFW_MODE[chat_id] = True
-        await message.reply("🔞 NSFW Guard Enabled.")
-    elif mode == "off":
-        NSFW_MODE[chat_id] = False
-        await message.reply("✅ NSFW Guard Disabled.")
+    status = message.command[1] if len(message.command) > 1 else None
+    chat_id = message.chat.id
+
+    if status == "on":
+        NSFW_MODE_ENABLED[chat_id] = True
+        await message.reply("🔞 NSFW Guard is now **enabled** in this group.")
+    elif status == "off":
+        NSFW_MODE_ENABLED[chat_id] = False
+        await message.reply("🔕 NSFW Guard has been **disabled**.")
     else:
-        await message.reply("Invalid option. Use `on` or `off`.")
+        await message.reply("Usage: `/nsfw_mode on` or `/nsfw_mode off`")
 
-@Client.on_message(filters.photo | filters.video | filters.document)
-async def nsfw_detector_handler(_, message: Message):
+@Client.on_message(filters.text & filters.group & ~filters.edited)
+async def nsfw_detector(_, message: Message):
     chat_id = message.chat.id
-    if not NSFW_MODE.get(chat_id, False):
+    if not NSFW_MODE_ENABLED.get(chat_id):
         return
 
-    try:
-        is_nsfw = await is_nsfw_content(message)
-        if is_nsfw:
+    if is_nsfw_text(message.text):
+        try:
             await message.delete()
-            await message.reply("⚠️ NSFW content detected and deleted.")
-    except Exception as e:
-        print(f"NSFW check failed: {e}")
+            await message.reply(f"🚫 Message deleted due to NSFW content!\nUser: {message.from_user.mention}")
+        except Exception:
+            pass
