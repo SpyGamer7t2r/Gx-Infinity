@@ -1,23 +1,26 @@
+# utils/language.py
+
 from langdetect import detect
 from deep_translator import GoogleTranslator
 
 
 def detect_language(text: str) -> str:
     """
-    Detect the language of a given text.
+    Detects the language of the given text.
     Returns ISO 639-1 language code (e.g., 'en', 'hi', 'fr').
     """
     try:
         return detect(text)
     except Exception:
-        return "en"
+        return "en"  # fallback to English
 
 
-def translate_text(text: str, target_lang: str = "en") -> str:
+def translate_text(text: str, target_language: str = "en") -> str:
     """
-    Translate given text to target language (default English).
+    Translates text to the target language using Google Translator.
     """
     try:
-        return GoogleTranslator(source='auto', target=target_lang).translate(text)
+        translated = GoogleTranslator(source='auto', target=target_language).translate(text)
+        return translated
     except Exception:
-        return text
+        return text  # fallback to original text
