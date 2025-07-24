@@ -2,16 +2,30 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 import random
 
-REACTIONS = [
-    "😲", "😂", "🔥", "😍", "😭", "🤯", "😡", "👍", "👎", "💀",
-    "💯", "🤔", "🤡", "🥶", "😎", "👀", "🫡", "😴", "😈", "🎉"
-]
+# Keywords and their corresponding emoji reactions
+REACTIONS = {
+    "hello": ["👋", "😊"],
+    "hi": ["👋"],
+    "thanks": ["🙏", "😊"],
+    "love": ["❤️", "😍", "😘"],
+    "bye": ["👋", "😢"],
+    "good night": ["🌙", "😴"],
+    "good morning": ["☀️", "🌅"],
+    "lol": ["😂", "🤣"],
+    "congrats": ["🎉", "👏"],
+    "omg": ["😲", "😮"],
+    "wow": ["😮", "🤩"],
+}
 
-@Client.on_message(filters.command(["react", "reaction"]))
-async def send_reaction(_, message: Message):
-    if not message.reply_to_message:
-        await message.reply("Reply to a message to react!")
-        return
+@Client.on_message(filters.text & ~filters.edited)
+async def auto_react(_, message: Message):
+    text = message.text.lower()
 
-    reaction = random.choice(REACTIONS)
-    await message.reply_to_message.reply(reaction)
+    for keyword, emojis in REACTIONS.items():
+        if keyword in text:
+            emoji = random.choice(emojis)
+            try:
+                await message.react(emoji)
+            except Exception:
+                pass  # Some messages can't be reacted to (like service messages)
+            break  # React only once per message
