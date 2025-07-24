@@ -35,5 +35,5 @@ def generate_document(title: str, sections: list, output_dir="documents") -> str
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Example:
-# generate_document("My Report", [("Introduction", "This is the intro..."), ("Details", "Here are the details...")])
+# Example usage:
+# generate_document("My Report", [("Intro", "Welcome..."), ("Details", "More info...")])
