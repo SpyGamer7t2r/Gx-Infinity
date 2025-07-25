@@ -138,7 +138,7 @@ async def cmds_callback(client, callback_query):
     title = title_fonts.get(key, "📚 ᴄᴏᴍᴍᴀɴᴅꜱ")
     desc = cmd_descriptions.get(data, "No commands found.")
     await callback_query.message.edit_text(
-        f"{title}\n\n<code>{desc.strip()}</code>",
-        reply_markup=get_cmds_buttons(),
-        parse_mode="html"
-    )
+    formatted_text,
+    parse_mode="html",  # ✅ lowercase string hona chahiye
+    reply_markup=your_markup
+)
