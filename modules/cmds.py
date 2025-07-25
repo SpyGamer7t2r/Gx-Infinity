@@ -1,6 +1,8 @@
+import os
 from pyrogram import Client, filters
+from pyrogram.enums import ParseMode  # ✅ Add this line
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ChatType
+from dotenv import load_dotenv
 
 # Command categories and their UI buttons
 def get_cmds_buttons():
