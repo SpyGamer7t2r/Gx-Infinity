@@ -130,14 +130,19 @@ async def show_cmds(client, message: Message):
         parse_mode="html"
     )
 
-# Button callback
+# Callback handler
 @Client.on_callback_query(filters.regex("cmd_"))
 async def cmds_callback(client, callback_query):
     data = callback_query.data
     key = data.replace("cmd_", "")
     title = title_fonts.get(key, "📚 ᴄᴏᴍᴍᴀɴᴅꜱ")
     desc = cmd_descriptions.get(data, "No commands found.")
-    formatted_text = """
+
+    formatted_text = f"""
+<b>{title}</b>
+
+{desc}
+
 <b>ʜᴇʟʟᴏ, ɪ'ᴍ ɪɴꜰɪɴɪᴛʏ ᴀɪ</b> 🤖
 
 🧠 <b>ᴍᴀɪ ᴍᴜʟᴛɪ-ʙʀᴀɪɴ, ᴍᴏᴏᴅ + ᴘᴇʀꜱᴏɴᴀʟɪᴛʏ ʙᴀꜱᴇᴅ ᴀɪ ʜᴜ</b> 💡
@@ -146,8 +151,8 @@ async def cmds_callback(client, callback_query):
 💬 ᴄʜᴀᴛ ᴡɪᴛʜ ᴍᴇ ᴅɪʀᴇᴄᴛʟʏ, ᴀꜱᴋ ᴄᴏᴅᴇꜱ, ꜱᴇɴᴅ ғɪʟᴇꜱ, ɢᴇɴᴇʀᴀᴛᴇ ᴅᴏᴄꜱ, ᴘʀɪᴄᴇ ᴄʜᴇᴄᴋ, ᴀɴᴅ ᴍᴏʀᴇ!
 """
 
-await callback_query.message.edit_text(
-    formatted_text,
-    parse_mode="html",
-    reply_markup=your_markup
-)
+    await callback_query.message.edit_text(
+        formatted_text,
+        parse_mode="html",
+        reply_markup=get_cmds_buttons()
+    )
