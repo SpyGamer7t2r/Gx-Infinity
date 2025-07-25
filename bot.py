@@ -1,6 +1,7 @@
 import os
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.enums import ParseMode
 from dotenv import load_dotenv
 
 # ➕ Modules
@@ -24,7 +25,8 @@ app = Client(
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
-    in_memory=True
+    in_memory=True,
+parse_mode=ParseMode.HTML  # ✅ Fix parse_mode
 )
 
 # 🔧 𝙵𝙴𝙰𝚃𝚄𝚁𝙴 𝙳𝙰𝚃𝙰
