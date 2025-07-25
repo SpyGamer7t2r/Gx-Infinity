@@ -1,5 +1,3 @@
-# modules/auto_reply_modes.py
-
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import OWNER_ID
@@ -35,27 +33,46 @@ def mood_prefix(mood: str) -> str:
         "default": ""
     }.get(mood, "")
 
-# Owner-only command to change mood
-@Client.on_message(filters.command(["mood", "setmood"]) & filters.user(OWNER_ID))
+# Command to change mood (Owner-only or user-specific if expanded)
+@Client.on_message(filters.command(["mood", "setmood"]))
 async def change_user_mood(_, message: Message):
-    if len(message.command) < 2:
-        mood_list = "\n".join([f"`{k}` → {v}" for k, v in MOODS.items()])
-        await message.reply_text(
-            f"🎭 **Available Moods:**\n\n{mood_list}\n\nUse `/mood romantic` or `/mood funny`"
-        )
+    if not message.from_user:
         return
 
-    mood = message.command[1].lower()
-    if mood in MOODS:
-        set_mood(message.from_user.id, mood)
-        await message.reply_text(f"✅ Mood set to **{MOODS[mood]}**")
-    else:
-        await message.reply("❌ Invalid mood. Try `/mood funny` or `/mood romantic`")
-
-# Auto-reply based on mood (in DMs)
-@Client.on_message(filters.private & ~filters.command(["start", "help", "mood", "setmood"]))
-async def auto_reply_mode_handler(client, message: Message):
     user_id = message.from_user.id
+
+    if message.chat.type == "private" or user_id == OWNER_ID:
+        if len(message.command) < 2:
+            mood_list = "\n".join([f"`{k}` → {v}" for k, v in MOODS.items()])
+            await message.reply_text(
+                f"🎭 **Available Moods:**\n\n{mood_list}\n\nUse `/mood romantic` or `/mood funny`"
+            )
+            return
+
+        mood = message.command[1].lower()
+        if mood in MOODS:
+            set_mood(user_id, mood)
+            await message.reply_text(f"✅ Mood set to **{MOODS[mood]}**")
+        else:
+            await message.reply("❌ Invalid mood. Try `/mood funny` or `/mood romantic`")
+
+# Auto-reply in Private & Groups (except for known commands)
+@Client.on_message(filters.text & ~filters.command(["start", "help", "mood", "setmood"]))
+async def auto_reply_mode_handler(client, message: Message):
+    if not message.from_user:
+        return
+
+    user_id = message.from_user.id
+
+    # Ignore replies to bot's own messages
+    if message.reply_to_message and message.reply_to_message.from_user.id == client.me.id:
+        return
+
+    # Ignore group replies not directly mentioning bot
+    if message.chat.type != "private":
+        if client.me.username.lower() not in message.text.lower():
+            return
+
     mood = get_mood(user_id)
     prefix = mood_prefix(mood)
 
