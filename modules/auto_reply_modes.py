@@ -33,30 +33,31 @@ def mood_prefix(mood: str) -> str:
         "default": ""
     }.get(mood, "")
 
-# Command to change mood (Owner-only or user-specific if expanded)
+# Command to change mood
 @Client.on_message(filters.command(["mood", "setmood"]))
 async def change_user_mood(_, message: Message):
     if not message.from_user:
         return
 
     user_id = message.from_user.id
+    command_args = message.text.split(maxsplit=1)
 
     if message.chat.type == "private" or user_id == OWNER_ID:
-        if len(message.command) < 2:
+        if len(command_args) < 2:
             mood_list = "\n".join([f"`{k}` → {v}" for k, v in MOODS.items()])
             await message.reply_text(
                 f"🎭 **Available Moods:**\n\n{mood_list}\n\nUse `/mood romantic` or `/mood funny`"
             )
             return
 
-        mood = message.command[1].lower()
+        mood = command_args[1].strip().lower()
         if mood in MOODS:
             set_mood(user_id, mood)
             await message.reply_text(f"✅ Mood set to **{MOODS[mood]}**")
         else:
-            await message.reply("❌ Invalid mood. Try `/mood funny` or `/mood romantic`")
+            await message.reply_text("❌ Invalid mood. Try `/mood funny` or `/mood romantic`")
 
-# Auto-reply in Private & Groups (except for known commands)
+# Auto-reply system
 @Client.on_message(filters.text & ~filters.command(["start", "help", "mood", "setmood"]))
 async def auto_reply_mode_handler(client, message: Message):
     if not message.from_user:
@@ -64,11 +65,11 @@ async def auto_reply_mode_handler(client, message: Message):
 
     user_id = message.from_user.id
 
-    # Ignore replies to bot's own messages
+    # Skip bot's own replies
     if message.reply_to_message and message.reply_to_message.from_user.id == client.me.id:
         return
 
-    # Ignore group replies not directly mentioning bot
+    # In groups, only respond if bot is mentioned
     if message.chat.type != "private":
         if client.me.username.lower() not in message.text.lower():
             return
