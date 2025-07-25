@@ -1,113 +1,99 @@
 import random
-import httpx
-import json
-from config import (
-    AI_MODE,
-    OPENAI_API_KEY,
-    OPENROUTER_API_KEY,
-    DEEPAI_API_KEY,
-    DEFAULT_MOOD,
-    ALLOW_NSFW,
-)
+import aiohttp
+from config import AI_MODE, OPENAI_API_KEY, OPENROUTER_API_KEY, DEEPAI_API_KEY, DEFAULT_MOOD, ALLOW_NSFW
 
-# --- Moods and Modifiers ---
-MOOD_MAP = {
-    "romantic": "❤️ Darling,",
-    "angry": "😡 Listen here,",
-    "funny": "😂 Haha! Okay,",
-    "neutral": "",
-    "serious": "🧠 Logically speaking,"
+
+# Predefined mood modifiers
+MOOD_MODIFIERS = {
+    "romantic": "Speak lovingly, like a caring lover 💖",
+    "angry": "Reply in a bit irritated tone with sarcasm 😠",
+    "funny": "Be humorous and entertaining 😂",
+    "serious": "Answer strictly and seriously 🤨",
+    "neutral": "Respond normally without any emotion.",
+    "friendly": "Talk warmly and like a best friend 😊",
+    "sad": "Sound a bit low, emotional 😢",
+    "crazy": "Reply like a total wild funny psycho 🤪",
 }
 
-# --- Get mood prefix ---
-def apply_mood(text, mood):
-    mood = mood.lower() if mood else DEFAULT_MOOD
-    prefix = MOOD_MAP.get(mood, "")
-    return f"{prefix} {text}" if prefix else text
+# NSFW keywords
+NSFW_KEYWORDS = ["nude", "sex", "fuck", "xxx", "porn", "naked", "boobs", "dick", "vagina"]
 
-# --- NSFW Guard ---
-def contains_nsfw(text: str):
-    nsfw_keywords = ["sex", "porn", "nude", "xxx", "boobs", "dick", "fuck"]
-    return any(word in text.lower() for word in nsfw_keywords)
+def is_nsfw(text: str) -> bool:
+    return any(word in text.lower() for word in NSFW_KEYWORDS)
 
-# --- Main Brain Engine ---
-async def ask_ai(user_id: int, message: str, mood: str = None, brain: str = None):
-    # Optional NSFW blocker
-    if not ALLOW_NSFW and contains_nsfw(message):
+
+async def generate_ai_response(user_id: int, user_message: str, mood: str = None) -> str:
+    if not user_message.strip():
+        return "Please send a message to respond to."
+
+    # NSFW blocker
+    if not ALLOW_NSFW and is_nsfw(user_message):
         return "🚫 NSFW content is not allowed."
 
-    mood = mood or DEFAULT_MOOD
-    brain = (brain or AI_MODE).lower()
+    # Choose mood
+    mood = mood or DEFAULT_MOOD or "neutral"
+    mood_instruction = MOOD_MODIFIERS.get(mood.lower(), MOOD_MODIFIERS["neutral"])
 
+    # Construct final prompt
+    prompt = f"{mood_instruction}\nUser: {user_message.strip()}\nAI:"
+    
     try:
-        if brain == "openai":
-            return await openai_brain(message, mood)
-        elif brain == "openrouter":
-            return await openrouter_brain(message, mood)
-        elif brain == "deepai":
-            return await deepai_brain(message, mood)
+        if AI_MODE == "openai":
+            return await ask_openai(prompt)
+        elif AI_MODE == "openrouter":
+            return await ask_openrouter(prompt)
+        elif AI_MODE == "deepai":
+            return await ask_deepai(user_message)
         else:
-            return apply_mood("❌ Unknown AI engine selected.", mood)
+            return "⚠️ Invalid AI mode set. Please check config."
     except Exception as e:
-        return f"⚠️ AI engine error: {e}"
+        return f"❌ AI Error: {str(e)}"
 
-# --- OpenAI GPT-3.5 / GPT-4 ---
-async def openai_brain(prompt, mood):
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {"role": "system", "content": "You are a helpful AI assistant."},
-            {"role": "user", "content": prompt}
+
+# --- OpenAI GPT-3.5/4 API ---
+async def ask_openai(prompt: str) -> str:
+    import openai
+    openai.api_key = OPENAI_API_KEY
+
+    response = await openai.ChatCompletion.acreate(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful and creative assistant."},
+            {"role": "user", "content": prompt},
         ],
-        "temperature": 0.7,
-        "max_tokens": 500
-    }
+        max_tokens=1000,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content.strip()
 
-    async with httpx.AsyncClient() as client:
-        r = await client.post(url, headers=headers, json=data)
-        r.raise_for_status()
-        result = r.json()
-        reply = result["choices"][0]["message"]["content"]
-        return apply_mood(reply.strip(), mood)
 
-# --- OpenRouter GPT / Claude / Mixtral ---
-async def openrouter_brain(prompt, mood):
-    url = "https://openrouter.ai/api/v1/chat/completions"
+# --- OpenRouter GPT (Claude, Mixtral, LLaMA, etc.) ---
+async def ask_openrouter(prompt: str) -> str:
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://t.me/InfinityAIBot",
+        "X-Title": "Infinity AI",
     }
-    data = {
-        "model": "mistralai/mixtral-8x7b",
+    json_data = {
+        "model": "openrouter/openchat",
         "messages": [
-            {"role": "system", "content": "You are a smart assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": "You are an AI Assistant for Telegram."},
+            {"role": "user", "content": prompt},
         ],
-        "temperature": 0.7,
-        "max_tokens": 500
     }
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=json_data) as resp:
+            data = await resp.json()
+            return data["choices"][0]["message"]["content"].strip()
 
-    async with httpx.AsyncClient() as client:
-        r = await client.post(url, headers=headers, json=data)
-        r.raise_for_status()
-        result = r.json()
-        reply = result["choices"][0]["message"]["content"]
-        return apply_mood(reply.strip(), mood)
 
-# --- DeepAI (fallback) ---
-async def deepai_brain(prompt, mood):
-    url = "https://api.deepai.org/api/chat-response"
-    headers = {"api-key": DEEPAI_API_KEY}
-    data = {"message": prompt}
-
-    async with httpx.AsyncClient() as client:
-        r = await client.post(url, data=data, headers=headers)
-        r.raise_for_status()
-        result = r.json()
-        reply = result.get("output", "🤖 No response from DeepAI.")
-        return apply_mood(reply.strip(), mood)
+# --- DeepAI Text Generator (less powerful) ---
+async def ask_deepai(prompt: str) -> str:
+    url = "https://api.deepai.org/api/text-generator"
+    headers = {"Api-Key": DEEPAI_API_KEY}
+    data = {"text": prompt}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=data) as resp:
+            res = await resp.json()
+            return res.get("output", "🤖 Couldn't think of anything...")
