@@ -137,8 +137,17 @@ async def cmds_callback(client, callback_query):
     key = data.replace("cmd_", "")
     title = title_fonts.get(key, "📚 ᴄᴏᴍᴍᴀɴᴅꜱ")
     desc = cmd_descriptions.get(data, "No commands found.")
-    await callback_query.message.edit_text(
+    formatted_text = """
+<b>ʜᴇʟʟᴏ, ɪ'ᴍ ɪɴꜰɪɴɪᴛʏ ᴀɪ</b> 🤖
+
+🧠 <b>ᴍᴀɪ ᴍᴜʟᴛɪ-ʙʀᴀɪɴ, ᴍᴏᴏᴅ + ᴘᴇʀꜱᴏɴᴀʟɪᴛʏ ʙᴀꜱᴇᴅ ᴀɪ ʜᴜ</b> 💡
+
+🧩 ᴜꜱᴇ /menu ᴛᴏ ᴇxᴘʟᴏʀᴇ ғᴇᴀᴛᴜʀᴇꜱ 🎮
+💬 ᴄʜᴀᴛ ᴡɪᴛʜ ᴍᴇ ᴅɪʀᴇᴄᴛʟʏ, ᴀꜱᴋ ᴄᴏᴅᴇꜱ, ꜱᴇɴᴅ ғɪʟᴇꜱ, ɢᴇɴᴇʀᴀᴛᴇ ᴅᴏᴄꜱ, ᴘʀɪᴄᴇ ᴄʜᴇᴄᴋ, ᴀɴᴅ ᴍᴏʀᴇ!
+"""
+
+await callback_query.message.edit_text(
     formatted_text,
-    parse_mode="html",  # ✅ lowercase string hona chahiye
+    parse_mode="html",
     reply_markup=your_markup
 )
