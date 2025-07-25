@@ -1,7 +1,7 @@
 import json
 import os
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, User
 
 STATS_FILE = "user_stats.json"
 
@@ -30,11 +30,9 @@ def update_user_stats(user_id: int, username: str, chat_type: str):
             "total": 0,
         }
 
-    # Update username if changed
     if username and stats[uid]["username"] != username:
         stats[uid]["username"] = username
 
-    # Increment stats
     if chat_type == "private":
         stats[uid]["dms"] += 1
     elif chat_type in ["group", "supergroup"]:
@@ -46,16 +44,30 @@ def update_user_stats(user_id: int, username: str, chat_type: str):
 
 @Client.on_message(filters.command("mystats"))
 async def show_stats(client, message: Message):
-    user_id = str(message.from_user.id)
+    target: User = None
+
+    if message.reply_to_message:
+        target = message.reply_to_message.from_user
+    elif len(message.command) > 1:
+        username = message.text.split(None, 1)[1].lstrip("@")
+        try:
+            target = await client.get_users(username)
+        except Exception:
+            await message.reply_text("❌ User nahi mila. Username sahi bhejo.")
+            return
+    else:
+        target = message.from_user
+
+    user_id = str(target.id)
     stats = load_stats()
 
     if user_id not in stats:
-        await message.reply_text("📉 Koi stats nahi mile abhi tak.")
+        await message.reply_text(f"📉 Koi stats nahi mile `{target.first_name}` ke liye.")
         return
 
     s = stats[user_id]
     await message.reply_text(
-        f"📊 **Aapke Stats**\n\n"
+        f"📊 **{target.first_name} ke Stats**\n\n"
         f"👤 Username: `{s['username']}`\n"
         f"📬 DMs Used: `{s['dms']}`\n"
         f"👥 Groups Used: `{s['groups']}`\n"
@@ -70,10 +82,7 @@ async def top_stats(client, message: Message):
         await message.reply_text("Koi bhi data available nahi hai abhi.")
         return
 
-    # Sort by total interactions
-    sorted_stats = sorted(
-        stats.items(), key=lambda x: x[1]["total"], reverse=True
-    )
+    sorted_stats = sorted(stats.items(), key=lambda x: x[1]["total"], reverse=True)
 
     msg = "🏆 **Top 10 Active Users**\n\n"
     for i, (uid, data) in enumerate(sorted_stats[:10], 1):
