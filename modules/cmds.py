@@ -152,7 +152,7 @@ async def cmds_callback(client, callback_query):
 """
 
     await callback_query.message.edit_text(
-        formatted_text,
-        parse_mode="html",
-        reply_markup=get_cmds_buttons()
-    )
+    formatted_text,
+    parse_mode="HTML",  # ✅ Correct
+    reply_markup=your_markup
+)
