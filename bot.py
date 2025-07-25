@@ -4,7 +4,7 @@ from pyrogram.types import Message
 from dotenv import load_dotenv
 
 from modules.fun_stats import update_user_stats
-from modules.auto_reply_modes import auto_reply
+from modules.auto_reply_modes import auto_reply_mode_handler as auto_reply
 from modules.reaction_handler import emoji_react
 from modules.nsfw_guard import scan_nsfw
 from modules.brain import generate_ai_response
