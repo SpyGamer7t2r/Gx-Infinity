@@ -127,7 +127,7 @@ async def show_cmds(client, message: Message):
     await message.reply_text(
         "📜 <b>ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ɪɴꜰɪɴɪᴛʏ ʙᴏᴛ ᴄᴏᴍᴍᴀɴᴅ ᴘᴀɴᴇʟ</b>\nᴄʟɪᴄᴋ ᴀ ᴄᴀᴛᴇɢᴏʀʏ ʙᴇʟᴏᴡ ⬇️",
         reply_markup=get_cmds_buttons(),
-        parse_mode="html"
+        parse_mode=ParseMode.HTML
     )
 
 # Callback handler
@@ -153,6 +153,6 @@ async def cmds_callback(client, callback_query):
 
     await callback_query.message.edit_text(
         formatted_text,
-        parse_mode="html",
+        parse_mode=ParseMode.HTML,
         reply_markup=get_cmds_buttons()
     )
