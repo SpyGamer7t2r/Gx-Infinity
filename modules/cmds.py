@@ -127,7 +127,7 @@ async def show_cmds(client, message: Message):
     await message.reply_text(
         "📜 <b>ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ɪɴꜰɪɴɪᴛʏ ʙᴏᴛ ᴄᴏᴍᴍᴀɴᴅ ᴘᴀɴᴇʟ</b>\nᴄʟɪᴄᴋ ᴀ ᴄᴀᴛᴇɢᴏʀʏ ʙᴇʟᴏᴡ ⬇️",
         reply_markup=get_cmds_buttons(),
-        parse_mode="html"
+        parse_mode="HTML"
     )
 
 # Callback handler
