@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 from modules.fun_stats import update_user_stats
 from modules.auto_reply_modes import auto_reply  
-#from modules.reaction_handler import emoji_react
+import modules.reaction_handler
 from modules.nsfw_guard import scan_nsfw
 from modules.brain import generate_ai_response
 from modules.voice_to_text import voice_to_text_handler
