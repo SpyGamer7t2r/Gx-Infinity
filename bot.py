@@ -137,7 +137,7 @@ async def cmds_panel(client, message: Message):
 # 🧠 𝙼𝙰𝙸𝙽 𝙰𝙸 𝙷𝙰𝙽𝙳𝙻𝙴𝚁
 @app.on_message(filters.text & (filters.private | filters.group) & ~filters.command(["start", "menu", "cmds"]))
 async def main_message_handler(client, message: Message):
-    await update_user_stats(user_id=message.from_user.id)
+    await update_user_stats(user_id=message.from_user.id, username=message.from_user.username, chat_type=message.chat.type)
     await modules.reaction_handler.auto_react(client, message)
     await auto_reply(message)
 
