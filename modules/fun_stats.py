@@ -18,7 +18,7 @@ def save_stats(stats):
         json.dump(stats, f, indent=4)
 
 
-def update_user_stats(user_id: int, username: str, chat_type: str):
+async def update_user_stats(user_id: int, username: str, chat_type: str):
     stats = load_stats()
     uid = str(user_id)
 
