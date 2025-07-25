@@ -26,7 +26,7 @@ app = Client(
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
     in_memory=True,
-   parse_mode="html"  # ✅ Correct parse mode
+   parse_mode=ParseMode.HTML  # ✅ Correct
 )
 
 # 🔧 𝙵𝙴𝙰𝚃𝚄𝚁𝙴 𝙳𝙰𝚃𝙰
