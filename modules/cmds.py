@@ -135,10 +135,12 @@ async def show_cmds(client, message: Message):
 # Callback handler
 @Client.on_callback_query(filters.regex("cmd_"))
 async def cmds_callback(client, callback_query):
+    await callback_query.answer()  # ✅ DM click fix
+
     data = callback_query.data
     key = data.replace("cmd_", "")
     title = title_fonts.get(key, "📚 ᴄᴏᴍᴍᴀɴᴅꜱ")
-    desc = cmd_descriptions.get(f"cmd_{key}", "No commands found.")  # ✅ FIXED LINE
+    desc = cmd_descriptions.get(f"cmd_{key}", "No commands found.")
 
     formatted_text = f"""
 <b>{title}</b>
