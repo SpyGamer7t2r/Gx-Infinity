@@ -61,7 +61,7 @@ async def change_user_mood(_, message: Message):
 
 # Auto AI Reply system with mood + translation
 @Client.on_message(filters.text & ~filters.command(["start", "help", "mood", "setmood"]))
-async def auto_reply_mode_handler(client, message: Message):
+async def auto_reply(client, message: Message):
     if not message.from_user or not message.text:
         return
 
