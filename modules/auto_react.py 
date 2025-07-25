@@ -1,0 +1,37 @@
+# modules/auto_react.py
+
+from pyrogram import Client, filters
+from pyrogram.types import Message
+import random
+import re
+
+# Keyword-based emoji reactions
+REACTIONS = {
+    r"\bhello\b": ["👋", "😊"],
+    r"\bhi\b": ["👋"],
+    r"\bthanks\b|\bthank you\b": ["🙏", "😊"],
+    r"\blove\b": ["❤️", "😍", "😘"],
+    r"\bbye\b": ["👋", "😢"],
+    r"\bgood night\b": ["🌙", "😴"],
+    r"\bgood morning\b": ["☀️", "🌅"],
+    r"\blol\b": ["😂", "🤣"],
+    r"\bcongrats\b|\bcongratulations\b": ["🎉", "👏"],
+    r"\bomg\b": ["😲", "😮"],
+    r"\bwow\b": ["😮", "🤩"],
+}
+
+@Client.on_message(filters.text & ~filters.edited & ~filters.bot)
+async def auto_react(_, message: Message):
+    if not message.text or not message.chat or message.sender_chat:
+        return  # Ignore service messages, channels, etc.
+
+    text = message.text.lower()
+
+    for pattern, emojis in REACTIONS.items():
+        if re.search(pattern, text):
+            emoji = random.choice(emojis)
+            try:
+                await message.react(emoji)
+            except Exception:
+                pass  # Ignore messages that can't be reacted to
+            break  # Only one reaction per message
