@@ -55,35 +55,37 @@ async def change_user_mood(_, message: Message):
             set_mood(user_id, mood)
             await message.reply_text(f"✅ Mood set to **{MOODS[mood]}**")
         else:
-            await message.reply_text("❌ Invalid mood. Try `/mood funny` or `/mood romantic`")
+            await message.reply_text("❌ Invalid mood. Try `/mood funny`, `/mood romantic`, etc.")
+    else:
+        await message.reply_text("⚠️ Mood can only be set in **private chat** or by the bot owner.")
 
-# Auto-reply system
+# Auto AI Reply system with mood + translation
 @Client.on_message(filters.text & ~filters.command(["start", "help", "mood", "setmood"]))
 async def auto_reply_mode_handler(client, message: Message):
-    if not message.from_user:
+    if not message.from_user or not message.text:
         return
 
     user_id = message.from_user.id
 
-    # Skip bot's own replies
+    # Ignore bot's own replies
     if message.reply_to_message and message.reply_to_message.from_user.id == client.me.id:
         return
 
-    # In groups, only respond if bot is mentioned
+    # Only respond in group if bot is mentioned
     if message.chat.type != "private":
-        if client.me.username.lower() not in message.text.lower():
+        if f"@{client.me.username.lower()}" not in message.text.lower():
             return
 
     mood = get_mood(user_id)
     prefix = mood_prefix(mood)
 
-    input_text = message.text or ""
+    input_text = message.text
     lang = detect_language(input_text)
 
     if lang != "en":
         input_text = translate_text(input_text, lang, "en")
 
-    prompt = f"{prefix} {input_text}"
+    prompt = f"{prefix} {input_text}".strip()
     ai_reply = await get_ai_reply(user_id, prompt)
 
     if lang != "en":
