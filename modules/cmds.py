@@ -136,7 +136,7 @@ async def cmds_callback(client, callback_query):
     data = callback_query.data
     key = data.replace("cmd_", "")
     title = title_fonts.get(key, "📚 ᴄᴏᴍᴍᴀɴᴅꜱ")
-    desc = cmd_descriptions.get(data, "No commands found.")
+    desc = cmd_descriptions.get(f"cmd_{key}", "No commands found.")  # ✅ FIXED LINE
 
     formatted_text = f"""
 <b>{title}</b>
